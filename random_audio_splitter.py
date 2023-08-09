@@ -28,12 +28,12 @@ def split_audio_randomly(audio, window_length, num_windows):
 if __name__ == "__main__":
     window_size = 8000 #1s
 
-    input_file = "/home/user/Downloads/dave_brubeck_take_five.mp3"
-    output_files_dir = "testing_dataset/non_human_speech/"
+    input_file = "/home/user/Downloads/500hz_tone.mp3"
+    output_files_dir = "training_dataset/sine440_3/"
 
     src_audio_resampled = read_audio_file(input_file, base_freq)
 
-    segments = split_audio_randomly(src_audio_resampled, window_size, 10)
+    segments = split_audio_randomly(src_audio_resampled, window_size, 4)
 
     for idx, segment in enumerate(segments):
         random_name  = str(uuid.uuid4())

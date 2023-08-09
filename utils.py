@@ -37,9 +37,9 @@ def compute_fft(samples):
     return positive_frequencies
 
 def compute_spectral_density_normalized(ffts):
-    sum_squared = np.sum(ffts, 0)
-    spectral_density = (ffts / sum_squared) ** 2
-    return spectral_density
+    f_pds = np.abs(ffts / len(ffts))**2 / len(ffts) / 8000
+    f_rms = np.sqrt(np.sum(f_pds**2) / len(ffts) * 8000)
+    return f_pds
 
 def compute_mean_and_std(matrix):
     matrix = np.vstack(matrix)
