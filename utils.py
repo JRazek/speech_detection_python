@@ -39,6 +39,7 @@ def compute_fft(samples):
 def compute_spectral_density_normalized(ffts):
     sum_squared = np.sum(ffts, 0)
     spectral_density = (ffts / sum_squared) ** 2
+    return spectral_density
 
 def compute_mean_and_std(matrix):
     matrix = np.vstack(matrix)
@@ -74,8 +75,7 @@ def visualize_plots(plots, title):
     plt.figure(figsize=(10, 4))
     plt.title(title)
 
-    for idx, (plot, _, label) in enumerate(plots):
+    for idx, plot in enumerate(plots):
         plt.subplot(len(plots), 1, idx + 1)
-        plt.plot(plot, label=label)
         plt.plot(plot)
 

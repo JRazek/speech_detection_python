@@ -5,7 +5,7 @@ from scipy.fft import fft
 import matplotlib.pyplot as plt
 import os
 
-from utils import supported_formats, get_audio_file_paths_in_dir, resample_audio, read_audio_file, compute_fft, visualize_plots, visualize_windows, compute_mean_and_std
+from utils import compute_spectral_density_normalized, supported_formats, get_audio_file_paths_in_dir, resample_audio, read_audio_file, compute_fft, visualize_plots, visualize_windows, compute_mean_and_std
 
 base_frequency = 8000
 
@@ -54,49 +54,55 @@ class Label(Enum):
     HUMAN_SPEECH = 1
     URBAN_NOISE = 2
 
-def test():
-    window_size = 8000 #1s
-    step_size = 8000
+def cross_correlated_average(dataset_ffts):
+    signal = dataset_ffts[0]
 
+    for i in  range(1, len(dataset_ffts)):
+        correlation = np.correlate(signal, dataset_ffts[i] * i, mode='full')
+        max_correlation = np.argmax(correlation)
+        dataset_ffts[i] = np.roll(dataset_ffts[i], max_correlation)
+        signal += dataset_ffts[i]
+
+    signal /= len(dataset_ffts)
+    return signal
+
+
+def speech_stats():
+    window_size = 8000 #1s
     datasets = [
         ('test_samples/humans_speaking01', Label.HUMAN_SPEECH),
         ('test_samples/humans_speaking02', Label.HUMAN_SPEECH),
+        ('test_samples/humans_speaking_female01', Label.HUMAN_SPEECH),
         ('test_samples/humans_speaking_mix', Label.HUMAN_SPEECH),
         ('test_samples/random_urban_noises', Label.URBAN_NOISE),
         ('test_samples/random_noises_mix', Label.URBAN_NOISE),
     ]
 
-    plots = []
+    human_ffts = []
+    non_human_ffts = []
 
     for (dataset_name, label) in datasets:
         print(f"Processing dataset {dataset_name}, with label {label}")
 
         dataset_ffts = handle_audio_file_dataset(get_audio_file_paths_in_dir(dataset_name), window_size)
 
-        flatten_dataset_windows = arr2d_to_arr1d(dataset_ffts);
-#        visualize_windows(flatten_dataset_windows, window_size, "visualize dataset: " + dataset_name)
-        dataset_mean_vector, dataset_std_dev_norm = compute_mean_and_std(flatten_dataset_windows)
-        plots.append((dataset_mean_vector, dataset_std_dev_norm, label))
+        flatten_ffts_windows = arr2d_to_arr1d(dataset_ffts);
 
-    visualize_plots(plots, "Mean vectors and standard deviation")
+        dataset_mean_vector, _ = compute_mean_and_std(flatten_ffts_windows)
 
-#    another_dataset_human_audio = 'test_samples/female_speaker_en.mp3';
-#
-#    another_dataset_human_ffts = handle_audio_file(another_dataset_human_audio, window_size)
-#    print(another_dataset_human_ffts.shape)
-#
-#    visualize_windows(another_dataset_human_ffts, window_size, "Random windows from another dataset")
+        normalized_energy_density = compute_spectral_density_normalized(dataset_mean_vector)
+        if label == Label.HUMAN_SPEECH:
+            human_ffts.append(normalized_energy_density)
+        else:
+            non_human_ffts.append(normalized_energy_density)
 
+    average_signal = cross_correlated_average(human_ffts)
 
+    to_visualize = np.array([average_signal, *non_human_ffts])
 
-#    another_dataset_human_spectrum = split_audio_to_windows(another_dataset_human_audio, window_size, step_size)
+    visualize_plots(to_visualize, "average human vs average non-human sound")
 
-#    print(len(humans_speech_mean_vector))
-#    print(len(urban_noises_mean_vector))
-
-#    visualize_windows(np.vstack((humans_speech_mean_vector, urban_noises_mean_vector)), window_size, "Humans speech mean vector")
-#    visualize_windows(np.vstack((urban_noises_mean_vector, another_dataset_human_spectrum)), window_size, "Urban noises mean vector")
     plt.pause(1000)
 
 if __name__ == "__main__":
-    test()
+    speech_stats()
