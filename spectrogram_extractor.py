@@ -1,11 +1,8 @@
 from enum import Enum
-from pydub import AudioSegment
 import numpy as np
-from scipy.fft import fft
 import matplotlib.pyplot as plt
-import os
 
-from utils import compute_spectral_density_normalized, supported_formats, get_audio_file_paths_in_dir, resample_audio, read_audio_file, compute_fft, visualize_plots, visualize_windows, compute_mean_and_std
+from utils import compute_spectral_density_normalized, get_audio_file_paths_in_dir, read_audio_file, compute_fft, visualize_plots, compute_mean_and_std
 
 base_frequency = 8000
 
@@ -70,12 +67,12 @@ def cross_correlated_average(dataset_ffts):
 def speech_stats():
     window_size = 8000 #1s
     datasets = [
-        ('test_samples/humans_speaking01', Label.HUMAN_SPEECH),
-        ('test_samples/humans_speaking02', Label.HUMAN_SPEECH),
-        ('test_samples/humans_speaking_female01', Label.HUMAN_SPEECH),
-        ('test_samples/humans_speaking_mix', Label.HUMAN_SPEECH),
-        ('test_samples/random_urban_noises', Label.URBAN_NOISE),
-        ('test_samples/random_noises_mix', Label.URBAN_NOISE),
+        ('training_dataset/humans_speaking01', Label.HUMAN_SPEECH),
+        ('training_dataset/humans_speaking02', Label.HUMAN_SPEECH),
+        ('training_dataset/humans_speaking_female01', Label.HUMAN_SPEECH),
+        ('training_dataset/humans_speaking_mix', Label.HUMAN_SPEECH),
+        ('training_dataset/random_urban_noises', Label.URBAN_NOISE),
+        ('training_dataset/random_noises_mix', Label.URBAN_NOISE),
     ]
 
     human_ffts = []
