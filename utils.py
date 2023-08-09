@@ -31,19 +31,27 @@ def read_audio_file(file_path, dst_freq=-1):
     audio = resample_audio(audio, dst_freq)
     return audio
 
-def compute_spectrogram(samples, window_size, step_size):
-    window = np.hanning(window_size)
-    start = 0
-    spectrogram = []
+def compute_fft(samples):
+    spectrum = np.abs(np.fft.fft(samples))
+    positive_frequencies = spectrum[:len(samples) // 2]  # Only keep the positive frequencies
+    return positive_frequencies
 
-    while start + window_size <= len(samples):
-        segment = samples[start:start+window_size]
-        windowed_segment = segment * window
-        spectrum = np.abs(fft(windowed_segment))
-        spectrogram.append(spectrum[:window_size // 2])  # we only keep the positive frequencies
-        start += step_size
+def compute_spectral_density_normalized(ffts):
+    sum_squared = np.sum(ffts, 0)
+    spectral_density = (ffts / sum_squared) ** 2
 
-    return np.array(spectrogram).T  # Transpose to have time on the x-axis
+def compute_mean_and_std(matrix):
+    matrix = np.vstack(matrix)
+
+    # Calculate mean vector
+    mean_vector = np.mean(matrix, 0)
+
+    # Calculate standard deviation vector
+    std_dev = np.std(matrix, 0)
+
+    std_dev_vector_norm = np.linalg.norm(std_dev)
+
+    return mean_vector, std_dev_vector_norm
 
 def visualize_windows(spectra, window_size, figure_name="FFT Spectrum"):
     # Generate frequency axis
@@ -60,6 +68,14 @@ def visualize_windows(spectra, window_size, figure_name="FFT Spectrum"):
     plt.title(figure_name)
     plt.xlabel("Frequency (Hz)")
     plt.ylabel("Magnitude")
-    plt.legend()  # To show the label for each spectrum
     plt.tight_layout()
-    plt.show(block=False)
+
+def visualize_plots(plots, title):
+    plt.figure(figsize=(10, 4))
+    plt.title(title)
+
+    for idx, (plot, _, label) in enumerate(plots):
+        plt.subplot(len(plots), 1, idx + 1)
+        plt.plot(plot, label=label)
+        plt.plot(plot)
+
