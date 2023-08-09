@@ -2,7 +2,7 @@ from enum import Enum
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import compute_spectral_density_normalized, get_audio_file_paths_in_dir, read_audio_file, compute_fft, visualize_plots, compute_mean_and_std
+from utils import get_audio_file_paths_in_dir, read_audio_file, compute_fft, visualize_plots, compute_mean_and_std
 
 base_frequency = 8000
 
@@ -114,7 +114,7 @@ def speech_stats():
 
         dataset_mean_vector, _ = compute_mean_and_std(flatten_ffts_windows)
 
-        dataset_mean_vector = compute_spectral_density_normalized(dataset_mean_vector)
+        dataset_mean_vector = dataset_mean_vector / np.std(dataset_mean_vector)
 
         if label == Label.HUMAN_SPEECH:
             human_ffts.append(dataset_mean_vector)
