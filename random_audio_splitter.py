@@ -1,6 +1,7 @@
 from pydub import AudioSegment
 import random
 import os
+import uuid
 
 base_freq = 8000
 
@@ -27,13 +28,14 @@ def split_audio_randomly(audio, window_length, num_windows):
 if __name__ == "__main__":
     window_size = 8000 #1s
 
-    input_file = "test_samples/urban_new_york_noise.mp3"
-    output_files_dir = "test_samples/random_urban_noises/"
+    input_file = "/home/user/Downloads/dave_brubeck_take_five.mp3"
+    output_files_dir = "testing_dataset/non_human_speech/"
 
     src_audio_resampled = read_audio_file(input_file, base_freq)
 
     segments = split_audio_randomly(src_audio_resampled, window_size, 10)
 
     for idx, segment in enumerate(segments):
-        output_file = os.path.join(output_files_dir, f"window_{idx+1}.mp3")
+        random_name  = str(uuid.uuid4())
+        output_file = os.path.join(output_files_dir, f"{random_name}.mp3")
         segment.export(output_file, format="mp3")

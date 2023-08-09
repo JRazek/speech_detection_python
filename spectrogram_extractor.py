@@ -51,24 +51,26 @@ class Label(Enum):
     HUMAN_SPEECH = 1
     URBAN_NOISE = 2
 
-def cross_correlated_average(dataset_ffts):
-    signal = dataset_ffts[0]
-
-    for i in  range(1, len(dataset_ffts)):
-        correlation = np.correlate(signal, dataset_ffts[i] * i, mode='full')
-        max_correlation = np.argmax(correlation)
+def cross_correlate_shifts(dataset_ffts, reference_spectrum):
+    for i in range(1, len(dataset_ffts)):
+        correlation = np.correlate(reference_spectrum, dataset_ffts[i], mode='full')
+        max_correlation = np.argmax(correlation) - len(reference_spectrum) + 1  # Adjusting for zero lag position
         dataset_ffts[i] = np.roll(dataset_ffts[i], max_correlation)
-        signal += dataset_ffts[i]
 
-    signal /= len(dataset_ffts)
-    return signal
+    return dataset_ffts
 
+def cross_correlated_average(dataset_ffts):
+    dataset_ffts = np.array(dataset_ffts)
+    dataset_ffts = cross_correlate_shifts(dataset_ffts[1:-1], dataset_ffts[0])
+    accumulative_signal = dataset_ffts.sum(axis=0)
+    accumulative_signal /= len(dataset_ffts)
+    return accumulative_signal
 
 def speech_stats():
     window_size = 8000 #1s
     datasets = [
-        ('training_dataset/humans_speaking01', Label.HUMAN_SPEECH),
         ('training_dataset/humans_speaking02', Label.HUMAN_SPEECH),
+        ('training_dataset/humans_speaking01', Label.HUMAN_SPEECH),
         ('training_dataset/humans_speaking_female01', Label.HUMAN_SPEECH),
         ('training_dataset/humans_speaking_mix', Label.HUMAN_SPEECH),
         ('training_dataset/random_urban_noises', Label.URBAN_NOISE),
@@ -95,9 +97,10 @@ def speech_stats():
 
     average_signal = cross_correlated_average(human_ffts)
 
-    to_visualize = np.array([average_signal, *non_human_ffts])
 
-    visualize_plots(to_visualize, "average human vs average non-human sound")
+    human_ffts = cross_correlate_shifts(human_ffts, average_signal)
+    non_human_ffts = cross_correlate_shifts(non_human_ffts, average_signal)
+    visualize_plots(human_ffts, average_signal, non_human_ffts)
 
     plt.pause(1000)
 
