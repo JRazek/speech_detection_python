@@ -71,27 +71,26 @@ def visualize_windows(spectra, window_size, figure_name="FFT Spectrum"):
     plt.ylabel("Magnitude")
     plt.tight_layout()
 
-def visualize_plots(human_spectrums, human_extracted_spectrum, non_human_spectrums):
-    # Determine the number of plots we will have
-    num_plots = len(human_spectrums) + len(non_human_spectrums)
+def visualize_plots(human_spectrums, human_correls, non_human_spectrums, non_human_correls, human_reference_spectrum):
+    # Determine the number of rows we will have
+    num_rows = max(len(human_spectrums), len(non_human_spectrums))
 
-    plt.figure(figsize=(10, 4 * num_plots))  # Adjusting figure size based on number of plots
+    plt.figure(figsize=(20, 4 * num_rows))  # Adjusting figure size based on number of plots
 
     # Plotting human spectrums
-    for idx, plot in enumerate(human_spectrums):
-        ax = plt.subplot(num_plots, 1, idx + 1)
+    for idx, (plot, correl) in enumerate(zip(human_spectrums, human_correls)):
+        ax = plt.subplot(num_rows, 2, 2*idx + 1)
         ax.text(0.05, 0.85, "Human spectrum " + str(idx + 1), transform=ax.transAxes, color='blue', backgroundcolor='white')
+        ax.text(0.05, 0.75, "Correlation: " + str(correl), transform=ax.transAxes, color='blue', backgroundcolor='white')
         plt.plot(plot)
-        plt.plot(human_extracted_spectrum, color='red', alpha=0.5)  # Overlaying with human_extracted_spectrum
-
-    # Adjusting starting index for non-human spectrums
-    start_idx = len(human_spectrums)
+        plt.plot(human_reference_spectrum, color='red', alpha=0.5)  # Overlaying with human_extracted_spectrum
 
     # Plotting non-human spectrums
-    for idx, plot in enumerate(non_human_spectrums):
-        ax = plt.subplot(num_plots, 1, start_idx + idx + 1)
+    for idx, (plot, correl) in enumerate(zip(non_human_spectrums, non_human_correls)):
+        ax = plt.subplot(num_rows, 2, 2*idx + 2)
         ax.text(0.05, 0.85, "Non-human spectrum " + str(idx + 1), transform=ax.transAxes, color='blue', backgroundcolor='white')
+        ax.text(0.05, 0.75, "Correlation: " + str(correl), transform=ax.transAxes, color='blue', backgroundcolor='white')
         plt.plot(plot)
-        plt.plot(human_extracted_spectrum, color='red', alpha=0.5)  # Overlaying with human_extracted_spectrum
+        plt.plot(human_reference_spectrum, color='red', alpha=0.5)  # Overlaying with human_extracted_spectrum
 
     plt.tight_layout()  # Adjust spacing between subplots for clarity

@@ -53,36 +53,38 @@ def arr2d_to_arr1d(arr2d):
 
 class Label(Enum):
     HUMAN_SPEECH = 1
-    URBAN_NOISE = 2
+    NON_SPEECH = 2
 
 def cross_correlate_shifts(dataset_ffts, reference_spectrum):
     aligned_ffts = []  # 
+    correlations = []
 
     for i in range(0, len(dataset_ffts)):
-        print("shape of dataset_ffts[i]: ", dataset_ffts[i].shape)
-        print("shape of reference_spectrum: ", reference_spectrum.shape)
+#        print("shape of dataset_ffts[i]: ", dataset_ffts[i].shape)
+#        print("shape of reference_spectrum: ", reference_spectrum.shape)
 
         correlation = np.correlate(reference_spectrum, dataset_ffts[i], mode='full')
-        print(f"Correlation for fft_{i}: {correlation}")
+#        print(f"Correlation for fft_{i}: {correlation}")
 
         argmax = np.argmax(correlation)
         argmin = np.argmin(correlation)
 
-        print(f"fft_{i}, argmax: {argmax}, max: {correlation[argmax]}")
-        print(f"fft_{i}, argmin: {argmin}, min: {correlation[argmin]}")
+#        print(f"fft_{i}, argmax: {argmax}, max: {correlation[argmax]}")
+#        print(f"fft_{i}, argmin: {argmin}, min: {correlation[argmin]}")
 
         shift = len(reference_spectrum) - argmax - 1
 
         shifted_fft = np.roll(dataset_ffts[i], -shift)
 
         aligned_ffts.append(shifted_fft)
+        correlations.append(correlation[argmax])
 
-    return np.array(aligned_ffts)
+    return (np.array(aligned_ffts), np.array(correlations))
 
 def cross_correlated_average(dataset_ffts):
     if len(dataset_ffts) == 1:
         return dataset_ffts[0]
-    aligned_ffts = cross_correlate_shifts(dataset_ffts[1:], dataset_ffts[0])
+    (aligned_ffts, correls) = cross_correlate_shifts(dataset_ffts[1:], dataset_ffts[0])
     accumulative_signal = aligned_ffts.sum(axis=0)
     accumulative_signal /= len(aligned_ffts)
     return accumulative_signal
@@ -95,10 +97,12 @@ def speech_stats():
         ('training_dataset/humans_speaking_female01', Label.HUMAN_SPEECH),
         ('training_dataset/humans_speaking_mix', Label.HUMAN_SPEECH),
         ('testing_dataset/human_speech', Label.HUMAN_SPEECH),
-        ('training_dataset/random_urban_noises', Label.URBAN_NOISE),
-        ('training_dataset/random_noises_mix', Label.URBAN_NOISE),
-#        ('training_dataset/sine440_1', Label.HUMAN_SPEECH),
-#        ('training_dataset/sine440_2', Label.HUMAN_SPEECH),
+        ('training_dataset/random_urban_noises', Label.NON_SPEECH),
+        ('training_dataset/random_noises_mix', Label.NON_SPEECH),
+        ('training_dataset/keyboard_noises_breath', Label.NON_SPEECH),
+        ('training_dataset/keyboard_noises_breath', Label.NON_SPEECH),
+#        ('training_dataset/sine440_1', Label.URBAN_NOISE),
+#        ('training_dataset/sine440_2', Label.URBAN_NOISE),
 #        ('training_dataset/sine440_3', Label.URBAN_NOISE),
     ]
 
@@ -114,7 +118,7 @@ def speech_stats():
 
         dataset_mean_vector, _ = compute_mean_and_std(flatten_ffts_windows)
 
-        dataset_mean_vector = dataset_mean_vector / np.std(dataset_mean_vector)
+        dataset_mean_vector = dataset_mean_vector / np.linalg.norm(dataset_mean_vector)
 
         if label == Label.HUMAN_SPEECH:
             human_ffts.append(dataset_mean_vector)
@@ -123,13 +127,12 @@ def speech_stats():
 
     reference_fft = cross_correlated_average(human_ffts) #note that this is cross corr average of ALREADE SPEC DENSITY NORMALIZED
 
-    human_ffts_shifted = cross_correlate_shifts(human_ffts, reference_fft)
-    non_human_ffts_shifted = cross_correlate_shifts(non_human_ffts, reference_fft)
+    (human_ffts_shifted, human_correls) = cross_correlate_shifts(human_ffts, reference_fft)
+    (non_human_ffts_shifted, non_human_correls) = cross_correlate_shifts(non_human_ffts, reference_fft)
 
-    visualize_plots(human_ffts, reference_fft, non_human_ffts)
-    visualize_plots(human_ffts_shifted, reference_fft, non_human_ffts_shifted)
-
-    np.save("reference_fft.npy", reference_fft)
+    visualize_plots(human_ffts_shifted, human_correls, non_human_ffts_shifted, non_human_correls, reference_fft)
+#
+#    np.save("reference_fft.npy", reference_fft)
 
     plt.pause(10000)
     plt.savefig("speech_stats.svg")
