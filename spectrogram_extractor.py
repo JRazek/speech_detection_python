@@ -60,17 +60,10 @@ def cross_correlate_shifts(dataset_ffts, reference_spectrum):
     correlations = []
 
     for i in range(0, len(dataset_ffts)):
-#        print("shape of dataset_ffts[i]: ", dataset_ffts[i].shape)
-#        print("shape of reference_spectrum: ", reference_spectrum.shape)
-
         correlation = np.correlate(reference_spectrum, dataset_ffts[i], mode='full')
-#        print(f"Correlation for fft_{i}: {correlation}")
 
         argmax = np.argmax(correlation)
-        argmin = np.argmin(correlation)
 
-#        print(f"fft_{i}, argmax: {argmax}, max: {correlation[argmax]}")
-#        print(f"fft_{i}, argmin: {argmin}, min: {correlation[argmin]}")
 
         shift = len(reference_spectrum) - argmax - 1
 
@@ -84,7 +77,7 @@ def cross_correlate_shifts(dataset_ffts, reference_spectrum):
 def cross_correlated_average(dataset_ffts):
     if len(dataset_ffts) == 1:
         return dataset_ffts[0]
-    (aligned_ffts, correls) = cross_correlate_shifts(dataset_ffts[1:], dataset_ffts[0])
+    (aligned_ffts, _) = cross_correlate_shifts(dataset_ffts[1:], dataset_ffts[0])
     accumulative_signal = aligned_ffts.sum(axis=0)
     accumulative_signal /= len(aligned_ffts)
     return accumulative_signal
@@ -92,24 +85,23 @@ def cross_correlated_average(dataset_ffts):
 def speech_stats():
     window_size = 8000 #1s
     datasets = [
-        ('training_dataset/humans_speaking02', Label.HUMAN_SPEECH),
-        ('training_dataset/humans_speaking01', Label.HUMAN_SPEECH),
-        ('training_dataset/humans_speaking_female01', Label.HUMAN_SPEECH),
-        ('training_dataset/humans_speaking_mix', Label.HUMAN_SPEECH),
-        ('testing_dataset/human_speech', Label.HUMAN_SPEECH),
-        ('training_dataset/random_urban_noises', Label.NON_SPEECH),
-        ('training_dataset/random_noises_mix', Label.NON_SPEECH),
-        ('training_dataset/keyboard_noises_breath', Label.NON_SPEECH),
-        ('training_dataset/keyboard_noises_breath', Label.NON_SPEECH),
-#        ('training_dataset/sine440_1', Label.URBAN_NOISE),
-#        ('training_dataset/sine440_2', Label.URBAN_NOISE),
-#        ('training_dataset/sine440_3', Label.URBAN_NOISE),
+        ('training_dataset/humans_speaking01', Label.HUMAN_SPEECH, "human_male01"),
+        ('training_dataset/humans_speaking02', Label.HUMAN_SPEECH, "human_male02"),
+        ('training_dataset/humans_speaking_female01', Label.HUMAN_SPEECH, "human_female01"),
+        ('training_dataset/humans_speaking_mix', Label.HUMAN_SPEECH, "human_female02"),
+        ('testing_dataset/human_speech', Label.HUMAN_SPEECH, "human_female03"),
+        ('training_dataset/random_urban_noises', Label.NON_SPEECH, "urban voices - a lot of background human speech"),
+        ('training_dataset/random_noises_mix', Label.NON_SPEECH, "random noises - breathing, coughing"),
+        ('training_dataset/keyboard_noises_breath', Label.NON_SPEECH, "keyboard noises, breathing"),
+        ('training_dataset/bottle_cracking', Label.NON_SPEECH, "bottle cracking"),
     ]
 
     human_ffts = []
-    non_human_ffts = []
 
-    for (dataset_name, label) in datasets:
+    ffts_all = []
+    ffts_all_names = []
+
+    for (dataset_name, label, name) in datasets:
         print(f"Processing dataset {dataset_name}, with label {label}")
 
         dataset_ffts = handle_audio_file_dataset(get_audio_file_paths_in_dir(dataset_name), window_size)
@@ -122,20 +114,19 @@ def speech_stats():
 
         if label == Label.HUMAN_SPEECH:
             human_ffts.append(dataset_mean_vector)
-        else:
-            non_human_ffts.append(dataset_mean_vector)
 
-    reference_fft = cross_correlated_average(human_ffts) #note that this is cross corr average of ALREADE SPEC DENSITY NORMALIZED
+        ffts_all.append(dataset_mean_vector)
+        ffts_all_names.append(name)
 
-    (human_ffts_shifted, human_correls) = cross_correlate_shifts(human_ffts, reference_fft)
-    (non_human_ffts_shifted, non_human_correls) = cross_correlate_shifts(non_human_ffts, reference_fft)
+    reference_fft = cross_correlated_average(human_ffts)
 
-    visualize_plots(human_ffts_shifted, human_correls, non_human_ffts_shifted, non_human_correls, reference_fft)
+    (ffts_shifted, correls) = cross_correlate_shifts(ffts_all, reference_fft)
+
+    visualize_plots(ffts_shifted, ffts_all_names, correls, reference_fft)
 #
 #    np.save("reference_fft.npy", reference_fft)
 
     plt.pause(10000)
-    plt.savefig("speech_stats.svg")
 
 if __name__ == "__main__":
     speech_stats()
