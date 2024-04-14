@@ -11,5 +11,5 @@ However, when benchmarked against this FFT-based method, some key distinctions a
 
 ### Efficiency and Speed: The proposed method, which employs two iterations of FFT (one for spectrum calculation, second for fast convolution algorithm) on a small chunk of audio data, is computationally less intensive than training and interference of complex machine learning models. This makes it faster and more real-time friendly, especially on devices with limited computational resources.
 ### Simplicity: While machine learning models require extensive data preprocessing, feature extraction, and model tuning, this method is straightforward. With just a couple of FFT operations, the desired result is achieved without the intricacies associated with deep learning frameworks or extensive training datasets.
-### Dependability: The FFT-based approach is deterministic. When provided with similar inputs, it will always produce the same outputs, unlike machine learning models which can sometimes yield unpredictable results due to their inherent stochastic nature.
+
 ![Correlation plots](https://github.com/JRazek/speech_detection_python/blob/master/human_vs_non_human_spectrums.png?raw=true)
